@@ -1,0 +1,59 @@
+# Alan Salazar   A00833257
+# 08/28/2024
+import csv
+import pandas as pd
+import numpy as np
+import seaborn as sns
+#import sweetviz as sv
+import matplotlib.pyplot as plt
+#from ydata_profiling import ProfileReport
+
+# Import Files (csv)
+customers = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/customers.csv")
+orders = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/orders.csv")
+products = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/products.csv")
+sales = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/sales.csv")
+
+
+# Merge customers and orders on 'customer_id'
+merged_data = pd.merge(customers, orders, on='customer_id')
+
+# Merge the result with sales on 'order_id', while keeping 'sales_id'
+merged_data = pd.merge(merged_data, sales, on='order_id', how='left', suffixes=('', '_sales'))
+
+# Merge the result with products on 'product_id'
+data_set = pd.merge(merged_data, products, on='product_id')
+
+#print(data_set.head())
+#print(data_set.dtypes)
+#print(data_set.describe())
+
+# Convert data type to category
+data_set[['customer_id','customer_name','gender','home_address','zip_code','city', \
+          'country','order_id','product_id','sales_id','product_type','product_name','size','colour','description']] \
+            = data_set[['customer_id','customer_name','gender','home_address','zip_code','city', \
+                        'country','order_id','product_id','sales_id','product_type','product_name','size','colour','description']].astype("category")
+
+# Convert datatype to date
+data_set['order_date'] = data_set['order_date'].astype('datetime64[ns]')
+data_set['delivery_date'] = data_set['delivery_date'].astype('datetime64[ns]')
+#print(data_set.dtypes)
+
+data_set.hist(figsize=(15,15),
+    layout=(4,3),
+    bins=20
+    )
+#plt.show()
+
+# Make default density plot
+plt.figure(figsize = (12, 7,))
+sns.set_theme(style="darkgrid")
+plt.subplot(221)
+sns.kdeplot(data_set['quantity'], fill=True, bw_method=1, label='quantity')
+plt.subplot(222)
+sns.kdeplot(data_set['discount'], fill=True, bw_method=1, label='discount')
+plt.subplot(223)
+sns.kdeplot(data_set['age'],fill=True, bw_method=1, label='age')
+plt.subplot(224)
+sns.kdeplot(data_set['price'],fill=True, bw_method=1, label='price')
+plt.show()
