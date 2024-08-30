@@ -1,18 +1,21 @@
 # Alan Salazar   A00833257
 # 08/28/2024
+import matplotlib
+matplotlib.use('Agg')  # Use a non-GUI backend to avoid Tkinter issues
+from datetime import datetime
 import csv
 import pandas as pd
 import numpy as np
 import seaborn as sns
-#import sweetviz as sv
+import sweetviz as sv
 import matplotlib.pyplot as plt
-#from ydata_profiling import ProfileReport
+from ydata_profiling import ProfileReport
 
 # Import Files (csv)
-customers = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/customers.csv")
-orders = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/orders.csv")
-products = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/products.csv")
-sales = pd.read_csv("C:/Users/salaz/Documents/Python codes/data_sets/sales.csv")
+customers = pd.read_csv("C:/Users/salaz/Documents/Coding/files/customers.csv")
+orders = pd.read_csv("C:/Users/salaz/Documents/Coding/files/orders.csv")
+products = pd.read_csv("C:/Users/salaz/Documents/Coding/files/products.csv")
+sales = pd.read_csv("C:/Users/salaz/Documents/Coding/files/sales.csv")
 
 
 # Merge customers and orders on 'customer_id'
@@ -37,23 +40,85 @@ data_set[['customer_id','customer_name','gender','home_address','zip_code','city
 # Convert datatype to date
 data_set['order_date'] = data_set['order_date'].astype('datetime64[ns]')
 data_set['delivery_date'] = data_set['delivery_date'].astype('datetime64[ns]')
-#print(data_set.dtypes)
 
 data_set.hist(figsize=(15,15),
     layout=(4,3),
     bins=20
     )
-#plt.show()
 
 # Make default density plot
-plt.figure(figsize = (12, 7,))
+plt.figure(figsize=(12, 7))
 sns.set_theme(style="darkgrid")
+
 plt.subplot(221)
-sns.kdeplot(data_set['quantity'], fill=True, bw_method=1, label='quantity')
+sns.kdeplot(data_set['payment'], fill=True, bw_method=1, label='payment')
+
 plt.subplot(222)
-sns.kdeplot(data_set['discount'], fill=True, bw_method=1, label='discount')
+sns.kdeplot(data_set['price_per_unit'], fill=True, bw_method=1, label='price per unit')
+
 plt.subplot(223)
-sns.kdeplot(data_set['age'],fill=True, bw_method=1, label='age')
+sns.kdeplot(data_set['quantity_x'], fill=True, bw_method=1, label='quantity x')
+
 plt.subplot(224)
-sns.kdeplot(data_set['price'],fill=True, bw_method=1, label='price')
+sns.kdeplot(data_set['quantity_y'], fill=True, bw_method=1, label='quantity y')
+# Show the plot
+plt.tight_layout()
 plt.show()
+
+
+profiling_report = sv.analyze(data_set)
+profile = ProfileReport(data_set, title="Profiling Report")
+profile.to_file("data_set_profiling.html")
+
+# Referential Integrity validation
+#foreign_key_mismatch_customerID = customer_purchases[~customer_purchases['customer_id'].isin(customer['customer_id'])]
+#foreign_key_mismatch_productID = customer_purchases[~customer_purchases['product_id'].isin(ethnicwear['product_id'])]
+#foreign_key_mismatch_productID2 = ethnicwear[~ethnicwear['product_id'].isin(customer_purchases['product_id'])]
+
+# Check null values
+valores_nulos = data_set.isnull().sum()
+print("Valores Nulos:")
+print(valores_nulos)
+
+# Typo identification
+for col in data_set.select_dtypes(include='category'):
+    print(f'\n\nColumn name: {col}')
+    print(data_set[col].value_counts())
+
+# Duplicate Rows
+duplicate_rows = data_set[data_set.duplicated()]
+print("Duplicate Rows:")
+print(duplicate_rows)
+filtered_data_set = data_set.query('customer_id == 986 and product_id==699')
+print(filtered_data_set)
+
+# Check numerical value range for the 'age' column
+valid_range = (19, 49)  
+value_range_check = data_set[~data_set['age'].between(*valid_range)]
+print("Value Range Check (Age):")
+print(value_range_check)
+
+# Zero Values identification
+(data_set['product_id'] == 0).sum()
+filtered_data_set = data_set.query('product_id == 0')
+print(filtered_data_set)
+
+# Verify dates
+invalid_dates = data_set[data_set['order_date'].apply(lambda x: not isinstance(x, datetime))]
+if not invalid_dates.empty:
+    raise ValueError('Invalid date formatting found.')
+print("Formato de Tipo de Fechas correctos")
+
+invalid_dates = data_set[data_set['delivery_date'].apply(lambda x: not isinstance(x, datetime))]
+if not invalid_dates.empty:
+    raise ValueError('Invalid date formatting found.')
+print("Formato de Tipo de Fechas correctos")
+
+# Plot outliers
+sns.set_style("darkgrid") 
+sns.boxplot(x = 'customer_id', y = 'age', data = data_set)
+sns.set_style("darkgrid") 
+sns.boxplot(x = 'size', y = 'age', data = data_set)
+sns.set_style("darkgrid") 
+sns.boxplot(x = 'gender', y = 'age', data = data_set)
+data_set.boxplot()
