@@ -1,0 +1,40 @@
+from transformers import pipeline
+from pytrends.request import TrendReq
+
+# Function to get trending keywords from Google Trends
+def get_trending_keywords(topic, country):
+    pytrends = TrendReq(hl='en-US', tz=360)  # Initialize pytrends
+    pytrends.build_payload([topic], geo=country)  # Set the topic and country
+
+    try:
+        trending_data = pytrends.related_queries()
+        if trending_data and topic in trending_data:
+            top_trends = trending_data[topic]['top']
+            if top_trends is not None:
+                keywords = top_trends['query'].tolist()
+                return keywords[:5]  # Limit to top 5 keywords
+    except (KeyError, IndexError):
+        print(f"No related queries found for topic '{topic}' in country '{country}'.")
+
+    return []
+
+# GPT-2 model function
+def generate_description(video_topic, keywords, country):
+    # Fetch trending keywords via Google Trends
+    seo_keywords = get_trending_keywords(video_topic, country)
+
+    if not seo_keywords:
+        seo_keywords = ["default_keyword"]  # Fallback if no trending keywords are found
+
+    # Initialize GPT-2 for text generation
+    generator = pipeline('text-generation', model='gpt-2')
+
+    # Generate SEO-optimized video description
+    input_text = f"Create an engaging description for a video about {video_topic} using keywords: {', '.join(keywords + seo_keywords)}."
+    description = generator(input_text, max_length=100, num_return_sequences=1)
+
+    return description[0]['generated_text']
+
+# Example usage:
+description = generate_description("fitness", ["workout", "health"], "US")  # 'MX' for Mexico
+print(description)
