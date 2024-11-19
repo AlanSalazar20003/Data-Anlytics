@@ -1,0 +1,14 @@
+/* style.css */
+body {
+    background-color: #2f2f2f; /* gray background */
+    color: white; /* White text */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    text-align: center; /* Center-align all headers */
+    color: white;
+}
+
+.stApp {
+    background-color: #2f2f2f; 
+}
